@@ -32,13 +32,24 @@ def sayMode(event):
     global modeIndex, modes
     if modeIndex == 0:
         modeIndex = 1
+        os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/study.mp3")
     elif modeIndex == 1:
         modeIndex = 2
+        os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/music.mp3")
     elif modeIndex == 2:
         modeIndex = 0
-    print(modes[modeIndex])
+        os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/audioBooks.mp3")
         
+def moveIntoDir(event):
+    global modeIndex, modes
+    if modeIndex == 0:
+        os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/youAreInAudioBooks.mp3")
+    elif modeIndex == 1:
+        os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/youAreInStudy.mp3")
+    elif modeIndex == 2:
+        os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/youAreInMusic.mp3")
 
+# main function implementation
 #####################################################################################################################################
 
 if __name__ == "__main__":
@@ -68,7 +79,7 @@ if __name__ == "__main__":
     #######################################
     # setting mode button to say the different modes on single press
     modeBtn.bind('<Button-1>', sayMode)
-    
+    okBtn.bind('<Button-1>', moveIntoDir)
 
     # intializing the simulator window
     #######################################
