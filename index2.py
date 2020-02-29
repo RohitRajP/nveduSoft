@@ -21,6 +21,7 @@ modes = ["audiobooks", "study", "music"]
 
 # holds the current context
 # modeContext - just changed the mode
+# inMode - inside a mode 
 context = "modeContext"
 
 # holds the current mode index
@@ -86,6 +87,8 @@ def callBackHub(buttonCode):
     elif buttonCode == "okBtn":
         # deciding action based on context
         if context == "modeContext":
+            # changing context to show that we are now inside a mode
+            context = "inMode"
             # changing current directory
             os.chdir(rootAddress+"/"+modes[modeIndex])
             # creating process instance
@@ -107,9 +110,9 @@ if __name__ == "__main__":
     # reverse button
     reverseBtn = Button(window, text="Reverse", fg='Black', height=8, width=26)
     # forward Button
-    forwardBtn = Button(window, text="Forward", fg='Black',height=8, width=26)
+    forwardBtn = Button(window, text="Forward", fg='Black',height=8, width=26, command=lambda: callBackHub("forwardBtn"))
     # cancel Button
-    cancelBtn = Button(window, text="Cancel", fg='Black',height=6, width=26)
+    cancelBtn = Button(window, text="Cancel", fg='Black',height=6, width=26, command=lambda: callBackHub("backwardBtn"))
     # ok Button
     okBtn = Button(window, text="OK", fg='Black',height=6, width=26, command=lambda: callBackHub("okBtn"))
 
