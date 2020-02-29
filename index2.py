@@ -140,14 +140,20 @@ def callBackHub(buttonCode):
         if context == "inMode":
             # updating directory listing
             dirFiles = os.listdir()
-            # updating the dirFilesIndex
-            if dirFilesIndex < len(dirFiles)-1:
-                dirFilesIndex += 1
+            # checking if the directory contains any files
+            if len(dirFiles) > 0:
+                # updating the dirFilesIndex
+                if dirFilesIndex < len(dirFiles)-1:
+                    dirFilesIndex += 1
+                else:
+                    dirFilesIndex = 0
+                # creating process to say the word
+                sayWordsProc = Process(target=sayWords, args=(dirFiles[dirFilesIndex].split(".")[0],))
+                sayWordsProc.start()
             else:
-                dirFilesIndex = 0
-            # creating process to say the word
-            sayWordsProc = Process(target=sayWords, args=(dirFiles[dirFilesIndex].split(".")[0],))
-            sayWordsProc.start()
+                # creating instance of say words process
+                sayWordsProc = Process(target=sayWords, args=("Empty folder",))
+                sayWordsProc.start()
         if context == "playingMedia":
             # getting the current position
             currentPos = player.get_position()
@@ -160,14 +166,20 @@ def callBackHub(buttonCode):
         if context == "inMode":
             # updating directory listing
             dirFiles = os.listdir()
-            # updating the dirFilesIndex
-            if dirFilesIndex > 0:
-                dirFilesIndex -= 1
+            # checking if the directory contains any files
+            if len(dirFiles) > 0:
+                # updating the dirFilesIndex
+                if dirFilesIndex > 0:
+                    dirFilesIndex -= 1
+                else:
+                    dirFilesIndex = len(dirFiles) - 1
+                # creating process to say the word
+                sayWordsProc = Process(target=sayWords, args=(dirFiles[dirFilesIndex].split(".")[0],))
+                sayWordsProc.start()
             else:
-                dirFilesIndex = len(dirFiles) - 1
-            # creating process to say the word
-            sayWordsProc = Process(target=sayWords, args=(dirFiles[dirFilesIndex].split(".")[0],))
-            sayWordsProc.start()
+                # creating instance of say words process
+                sayWordsProc = Process(target=sayWords, args=("Empty folder",))
+                sayWordsProc.start()
         if context == "playingMedia":
             # getting the current position
             currentPos = player.get_position()
