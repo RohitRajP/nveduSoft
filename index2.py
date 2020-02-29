@@ -25,6 +25,7 @@ modes = ["audiobooks", "study", "music"]
 # holds the current context
 # modeContext - just changed the mode
 # inMode - inside a mode 
+# playingMedia - media playback in progress
 context = "modeContext"
 
 # holds the current mode index
@@ -32,6 +33,9 @@ modeIndex = -1
 
 # holds the root address of the directory structure
 rootAddress = ""
+
+# holds the global instance of the vlc player
+player = None
 
 # declaring callback functions to perform actions from processes
 ####################### ##############################################################################################################
@@ -84,7 +88,7 @@ def modeBtnPressed():
 # callbackHUB to distribute the calls appropriately
 #####################################################################################################################################
 def callBackHub(buttonCode):
-    global sayModeProc, sayCurrentModeProc, sayWordsProc,context, modeIndex, modes, rootAddress, dirFiles, dirFilesIndex
+    global sayModeProc, sayCurrentModeProc, sayWordsProc,context, modeIndex, modes, rootAddress, dirFiles, dirFilesIndex, player
     # terminating all running processes
     if sayModeProc.is_alive():
         sayModeProc.terminate()
@@ -94,15 +98,17 @@ def callBackHub(buttonCode):
         sayWordsProc.terminate()
 
     if buttonCode == "modeBtn":
-        # setting the current execution context
-        context = "modeContext"
-        # changing directory to root
-        os.chdir(rootAddress)
-        # calling method to modify the modeIndex
-        modeBtnPressed()
-        # changing current dire
-        sayModeProc = Process(target=sayMode,args=(modeIndex,))
-        sayModeProc.start()
+        # deciding action based on context
+        if context == "inMode" or context == "modeContext":
+            # setting the current execution context
+            context = "modeContext"
+            # changing directory to root
+            os.chdir(rootAddress)
+            # calling method to modify the modeIndex
+            modeBtnPressed()
+            # changing current dire
+            sayModeProc = Process(target=sayMode,args=(modeIndex,))
+            sayModeProc.start()
     elif buttonCode == "okBtn":
         # deciding action based on context
         if context == "modeContext":
@@ -113,6 +119,14 @@ def callBackHub(buttonCode):
             # creating process instance
             sayCurrentModeProc = Process(target=sayCurrentMode, args=(modeIndex,))
             sayCurrentModeProc.start()
+        if context == "inMode":
+            # cheking if the current file is an mp3
+            if dirFiles[dirFilesIndex].endswith(".mp3"):
+                # setting context 
+                context = "playingMedia"
+                # creating player instance
+                player = vlc.MediaPlayer(str(os.getcwd())+"/"+dirFiles[dirFilesIndex])
+                player.play()
     elif buttonCode == "forwardBtn":
         # executing script only for the appropriate context
         if context == "inMode":
@@ -139,6 +153,13 @@ def callBackHub(buttonCode):
             # creating process to say the word
             sayWordsProc = Process(target=sayWords, args=(dirFiles[dirFilesIndex].split(".")[0],))
             sayWordsProc.start()
+    elif buttonCode == "cancelBtn":
+        # executing script based on context
+        if context == "playingMedia":
+            # resetting context
+            context = "inMode"
+            # stopping playing media
+            player.stop()
 
 # main function implementation
 #####################################################################################################################################
@@ -156,7 +177,7 @@ if __name__ == "__main__":
     # forward Button
     forwardBtn = Button(window, text="Forward", fg='Black',height=8, width=26, command=lambda: callBackHub("forwardBtn"))
     # cancel Button
-    cancelBtn = Button(window, text="Cancel", fg='Black',height=6, width=26)
+    cancelBtn = Button(window, text="Cancel", fg='Black',height=6, width=26, command=lambda: callBackHub("cancelBtn"))
     # ok Button
     okBtn = Button(window, text="OK", fg='Black',height=6, width=26, command=lambda: callBackHub("okBtn"))
 
