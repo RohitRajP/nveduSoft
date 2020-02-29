@@ -10,6 +10,9 @@ from playsound import playsound
 # holds the list of files in current directory
 dirFiles = []
 
+# holds the current index in the directory
+dirFilesIndex = -1
+
 # initializing player variable for vlc
 player = None
 
@@ -25,7 +28,7 @@ modes = ["audiobooks", "study", "music"]
 context = "modeContext"
 
 # holds the current mode index
-modeIndex = 0
+modeIndex = -1
 
 # holds the root address of the directory structure
 rootAddress = ""
@@ -34,26 +37,36 @@ rootAddress = ""
 ####################### ##############################################################################################################
 # reads out the different modes on MODE button click
 def sayMode(modeIndex):
-    if modeIndex == 0:
+    if modeIndex == 1:
         os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/study.mp3")
-    elif modeIndex == 1:
-        os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/music.mp3")
     elif modeIndex == 2:
+        os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/music.mp3")
+    elif modeIndex == 0:
         os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/audioBooks.mp3")
 
 # reads out the current mode
 def sayCurrentMode(modeIndex):
-    if modeIndex == 0:
+    if modeIndex == 1:
         os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/youAreInStudy.mp3")
-    elif modeIndex == 1:
-        os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/youAreInMusic.mp3")
     elif modeIndex == 2:
+        os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/youAreInMusic.mp3")
+    elif modeIndex == 0:
         os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/youAreInAudioBooks.mp3")
+
+# say words using test to speech
+def sayWords(dialog):
+    engine = pyttsx3.init() # object creation
+    voices = engine.getProperty('voices')
+    engine.setProperty('rate', 120)
+    engine.setProperty('voice', voices[11].id)  # changes the voice
+    engine.say(dialog)
+    engine.runAndWait()
 
 # declaring process instances for each action
 #####################################################################################################################################
 sayModeProc = Process(target=sayMode)
 sayCurrentModeProc = Process(target=sayCurrentMode)
+sayWordsProc = Process(target=sayWords)
 
 # declaring middleware functions for execution of code that requires common memory
 #####################################################################################################################################
@@ -65,20 +78,26 @@ def modeBtnPressed():
         modeIndex = 2
     elif modeIndex == 2:
         modeIndex = 0
+    elif modeIndex == -1:
+        modeIndex = 0
 
 # callbackHUB to distribute the calls appropriately
 #####################################################################################################################################
 def callBackHub(buttonCode):
-    global sayModeProc, sayCurrentModeProc, context, modeIndex, modes, rootAddress
+    global sayModeProc, sayCurrentModeProc, sayWordsProc,context, modeIndex, modes, rootAddress, dirFiles, dirFilesIndex
     # terminating all running processes
-    if(sayModeProc.is_alive()):
+    if sayModeProc.is_alive():
         sayModeProc.terminate()
-    elif(sayCurrentModeProc.is_alive()):
+    elif sayCurrentModeProc.is_alive():
         sayCurrentModeProc.terminate()
+    elif sayWordsProc.is_alive():
+        sayWordsProc.terminate()
 
     if buttonCode == "modeBtn":
         # setting the current execution context
         context = "modeContext"
+        # changing directory to root
+        os.chdir(rootAddress)
         # calling method to modify the modeIndex
         modeBtnPressed()
         # changing current dire
@@ -94,7 +113,32 @@ def callBackHub(buttonCode):
             # creating process instance
             sayCurrentModeProc = Process(target=sayCurrentMode, args=(modeIndex,))
             sayCurrentModeProc.start()
-            
+    elif buttonCode == "forwardBtn":
+        # executing script only for the appropriate context
+        if context == "inMode":
+            # updating directory listing
+            dirFiles = os.listdir()
+            # updating the dirFilesIndex
+            if dirFilesIndex < len(dirFiles)-1:
+                dirFilesIndex += 1
+            else:
+                dirFilesIndex = 0
+            # creating process to say the word
+            sayWordsProc = Process(target=sayWords, args=(dirFiles[dirFilesIndex].split(".")[0],))
+            sayWordsProc.start()
+    elif buttonCode == "backwardBtn":
+        # executing script only for the appropriate context
+        if context == "inMode":
+            # updating directory listing
+            dirFiles = os.listdir()
+            # updating the dirFilesIndex
+            if dirFilesIndex > 0:
+                dirFilesIndex -= 1
+            else:
+                dirFilesIndex = len(dirFiles) - 1
+            # creating process to say the word
+            sayWordsProc = Process(target=sayWords, args=(dirFiles[dirFilesIndex].split(".")[0],))
+            sayWordsProc.start()
 
 # main function implementation
 #####################################################################################################################################
@@ -108,11 +152,11 @@ if __name__ == "__main__":
     # mode button
     modeBtn = Button(window, text="Mode", fg='Black', height=11,width=56, command=lambda: callBackHub("modeBtn"))
     # reverse button
-    reverseBtn = Button(window, text="Reverse", fg='Black', height=8, width=26)
+    reverseBtn = Button(window, text="Reverse", fg='Black', height=8, width=26, command=lambda: callBackHub("backwardBtn"))
     # forward Button
     forwardBtn = Button(window, text="Forward", fg='Black',height=8, width=26, command=lambda: callBackHub("forwardBtn"))
     # cancel Button
-    cancelBtn = Button(window, text="Cancel", fg='Black',height=6, width=26, command=lambda: callBackHub("backwardBtn"))
+    cancelBtn = Button(window, text="Cancel", fg='Black',height=6, width=26)
     # ok Button
     okBtn = Button(window, text="OK", fg='Black',height=6, width=26, command=lambda: callBackHub("okBtn"))
 
