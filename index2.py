@@ -111,7 +111,7 @@ def callBackHub(buttonCode):
             sayModeProc.start()
     elif buttonCode == "okBtn":
         # deciding action based on context
-        if context == "modeContext":
+        if context == "modeContext" and modeIndex != -1:
             # changing context to show that we are now inside a mode
             context = "inMode"
             # changing current directory
@@ -119,13 +119,21 @@ def callBackHub(buttonCode):
             # creating process instance
             sayCurrentModeProc = Process(target=sayCurrentMode, args=(modeIndex,))
             sayCurrentModeProc.start()
-        if context == "inMode":
+        elif context == "inMode":
             # cheking if the current file is an mp3
             if dirFiles[dirFilesIndex].endswith(".mp3"):
                 # setting context 
                 context = "playingMedia"
                 # creating player instance
                 player = vlc.MediaPlayer(str(os.getcwd())+"/"+dirFiles[dirFilesIndex])
+                player.play()
+        elif context == "playingMedia":
+            # checking if media is playing 
+            if player.is_playing():
+                # pausing media playback
+                player.pause()
+            else:
+                # continuing playback
                 player.play()
     elif buttonCode == "forwardBtn":
         # executing script only for the appropriate context
@@ -140,6 +148,13 @@ def callBackHub(buttonCode):
             # creating process to say the word
             sayWordsProc = Process(target=sayWords, args=(dirFiles[dirFilesIndex].split(".")[0],))
             sayWordsProc.start()
+        if context == "playingMedia":
+            # getting the current position
+            currentPos = player.get_position()
+            # adding 10 seconds to the current position
+            currentPos += 0.10
+            # setting new position for the audio
+            player.set_position(currentPos)
     elif buttonCode == "backwardBtn":
         # executing script only for the appropriate context
         if context == "inMode":
@@ -153,6 +168,13 @@ def callBackHub(buttonCode):
             # creating process to say the word
             sayWordsProc = Process(target=sayWords, args=(dirFiles[dirFilesIndex].split(".")[0],))
             sayWordsProc.start()
+        if context == "playingMedia":
+            # getting the current position
+            currentPos = player.get_position()
+            # adding 10 seconds to the current position
+            currentPos -= 0.10
+            # setting new position for the audio
+            player.set_position(currentPos)
     elif buttonCode == "cancelBtn":
         # executing script based on context
         if context == "playingMedia":
