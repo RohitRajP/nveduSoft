@@ -58,19 +58,28 @@ def sayCurrentMode(modeIndex):
         os.system("mpg123 " + "/home/rrj/Projects/NVEdu/audioSamples/operationMode/youAreInAudioBooks.mp3")
 
 # say words using test to speech
-def sayWords(dialog):
-    engine = pyttsx3.init() # object creation
-    voices = engine.getProperty('voices')
-    engine.setProperty('rate', 120)
-    engine.setProperty('voice', voices[11].id)  # changes the voice
-    engine.say(dialog)
-    engine.runAndWait()
+def sayWords(fileName):
+    # engine = pyttsx3.init() # object creation
+    # voices = engine.getProperty('voices')
+    # engine.setProperty('rate', 120)
+    # engine.setProperty('voice', voices[11].id)  # changes the voice
+    # engine.say(dialog)
+    # engine.runAndWait()
+    os.system("mpg123 " + "/home/rrj/Projects/NVEdu/root/filenames/"+fileName+".mp3")
+
+# start media playback
+def startMediaPlayback(player, filePath):
+    os.system("mplayer " + filePath)
+    # creating player instance
+    # player = vlc.MediaPlayer(filePath)
+    # player.play()
 
 # declaring process instances for each action
 #####################################################################################################################################
 sayModeProc = Process(target=sayMode)
 sayCurrentModeProc = Process(target=sayCurrentMode)
 sayWordsProc = Process(target=sayWords)
+playMediaProc = Process(target=startMediaPlayback)
 
 # declaring middleware functions for execution of code that requires common memory
 #####################################################################################################################################
@@ -88,7 +97,7 @@ def modeBtnPressed():
 # callbackHUB to distribute the calls appropriately
 #####################################################################################################################################
 def callBackHub(buttonCode):
-    global sayModeProc, sayCurrentModeProc, sayWordsProc,context, modeIndex, modes, rootAddress, dirFiles, dirFilesIndex, player
+    global sayModeProc, sayCurrentModeProc, sayWordsProc, playMediaProc,context, modeIndex, modes, rootAddress, dirFiles, dirFilesIndex, player
     # terminating all running processes
     if sayModeProc.is_alive():
         sayModeProc.terminate()
@@ -120,13 +129,24 @@ def callBackHub(buttonCode):
             sayCurrentModeProc = Process(target=sayCurrentMode, args=(modeIndex,))
             sayCurrentModeProc.start()
         elif context == "inMode":
-            # cheking if the current file is an mp3
-            if dirFiles[dirFilesIndex].endswith(".mp3"):
-                # setting context 
-                context = "playingMedia"
-                # creating player instance
-                player = vlc.MediaPlayer(str(os.getcwd())+"/"+dirFiles[dirFilesIndex])
-                player.play()
+            # updating directory listing
+            dirFiles = os.listdir()
+            # checking if the directory has any files and that the current index is not -1
+            if len(dirFiles) > 0 and dirFilesIndex != -1:
+                # cheking if the current file is an mp3
+                if dirFiles[dirFilesIndex].endswith(".mp3"):
+                    # setting context 
+                    context = "playingMedia"
+                    # playMediaProc = Process(target=startMediaPlayback, args=(player,str(os.getcwd())+"/"+dirFiles[dirFilesIndex],))
+                    # playMediaProc.start()
+                    # creating player instance
+                    player = vlc.MediaPlayer(str(os.getcwd())+"/"+dirFiles[dirFilesIndex])
+                    player.audio_set_volume(70)
+                    player.play()
+            else:
+                # creating say words instance to ask user to choose a file
+                sayWordsProc = Process(target=sayWords,args=("Select file",))
+                sayWordsProc.start()
         elif context == "playingMedia":
             # checking if media is playing 
             if player.is_playing():
